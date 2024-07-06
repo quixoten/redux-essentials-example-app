@@ -138,12 +138,9 @@ export const handlers = [
     if (data.content === 'error') {
       await delay(ARTIFICIAL_DELAY_MS)
 
-      return new HttpResponse(
-        JSON.stringify('Server error saving this post!'),
-        {
-          status: 500,
-        },
-      )
+      return new HttpResponse(JSON.stringify('Server error saving this post!'), {
+        status: 500,
+      })
     }
 
     data.date = new Date().toISOString()
@@ -205,11 +202,7 @@ export const handlers = [
   http.get('/fakeApi/notifications', async () => {
     const numNotifications = getRandomInt(1, 5)
 
-    let notifications = generateRandomNotifications(
-      undefined,
-      numNotifications,
-      db,
-    )
+    let notifications = generateRandomNotifications(undefined, numNotifications, db)
 
     await delay(ARTIFICIAL_DELAY_MS)
     return HttpResponse.json(notifications)
@@ -267,12 +260,7 @@ socketServer.on('connection', (socket) => {
 
 /* Random Notifications Generation */
 
-const notificationTemplates = [
-  'poked you',
-  'says hi!',
-  `is glad we're friends`,
-  'sent you a gift',
-]
+const notificationTemplates = ['poked you', 'says hi!', `is glad we're friends`, 'sent you a gift']
 
 function generateRandomNotifications(since, numNotifications, db) {
   const now = new Date()
