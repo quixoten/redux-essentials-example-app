@@ -8,27 +8,40 @@ export const AddPostForm = () => {
   const titleRef = React.useRef(null)
   const contentRef = React.useRef(null)
   const authorRef = React.useRef(null)
+  const [requestStatus, setRequestStatus] = React.useState('idle')
 
   const dispatch = useDispatch()
 
   const users = useSelector(usersSelctors.selectAllUsers)
 
-  const onSavePostsClicked = () => {
+  const onSavePostsClicked = async () => {
     if (!titleRef.current.value) return
     if (!contentRef.current.value) return
     if (!authorRef.current.value) return
+    if (requestStatus !== 'idle') return
 
-    dispatch(
-      postsActions.postsAdded(
-        `${titleRef.current.value}`,
-        `${contentRef.current.value}`,
-        `${authorRef.current.value}`,
-      ),
+    setRequestStatus('pending')
+
+    await dispatch(
+      postsActions.addNewPost({
+        title: `${titleRef.current.value}`,
+        content: `${contentRef.current.value}`,
+        user: `${authorRef.current.value}`,
+      }),
     )
-
-    titleRef.current.value = ''
-    contentRef.current.value = ''
-    authorRef.current.value = ''
+      .then(
+        () => {
+          // titleRef.current.value = ''
+          // contentRef.current.value = ''
+          // authorRef.current.value = ''
+        },
+        (err) => {
+          console.error('Failed to save the post: ', err)
+        },
+      )
+      .finally(() => {
+        setRequestStatus('idle')
+      })
   }
 
   return (
