@@ -1,14 +1,17 @@
-import { nanoid } from '@reduxjs/toolkit'
 import { createAppSlice } from '../../app/createAppSlice'
 import { client } from '../../api/client'
+import { createEntityAdapter } from '@reduxjs/toolkit'
 
-const emptyReactions = { thumbsUp: 0, hooray: 0, heart: 0, rocket: 0, eyes: 0 }
+const postsAdapter = createEntityAdapter({
+  sortComparer: (a, b) => b.date.localeCompare(a.date),
+})
 
-const initialState = {
-  posts: [],
+const postsAdapterSelectors = postsAdapter.getSelectors()
+
+const initialState = postsAdapter.getInitialState({
   status: 'idle',
   error: null,
-}
+})
 
 const postsSlice = createAppSlice({
   name: 'posts',
@@ -17,7 +20,7 @@ const postsSlice = createAppSlice({
   reducers: (create) => ({
     postUpdated: create.reducer((slice, action) => {
       const { id, title, content } = action.payload
-      const post = slice.posts.find((post) => post.id === id)
+      const post = slice.entities[id]
 
       if (!post) return
 
@@ -27,7 +30,7 @@ const postsSlice = createAppSlice({
 
     reactionAdded: create.reducer((slice, action) => {
       const { postId, reaction } = action.payload
-      const post = slice.posts.find((post) => post.id === postId)
+      const post = slice.entities[postId]
       if (post) {
         post.reactions[reaction]++
       }
@@ -39,9 +42,7 @@ const postsSlice = createAppSlice({
         return response.data
       },
       {
-        fulfilled: (slice, action) => {
-          slice.posts.push(action.payload)
-        },
+        fulfilled: postsAdapter.addOne,
       },
     ),
 
@@ -56,7 +57,7 @@ const postsSlice = createAppSlice({
         },
         fulfilled: (slice, action) => {
           slice.status = 'succeeded'
-          slice.posts = action.payload.data
+          postsAdapter.setAll(slice, action.payload.data)
         },
         rejected: (slice) => {
           slice.status = 'failed'
@@ -67,10 +68,13 @@ const postsSlice = createAppSlice({
   }),
 
   selectors: {
-    selectAllPosts: (slice) => slice.posts,
-    selectPostById: (slice, id) => slice.posts.find((post) => post.id === id),
-    selectStatus: (slice) => slice.status,
+    selectAllPosts: postsAdapterSelectors.selectAll,
     selectError: (slice) => slice.error,
+    selectPostById: postsAdapterSelectors.selectById,
+    selectPostIds: (slice) => slice.ids,
+    selectPostIds: postsAdapterSelectors.selectIds,
+    selectPostsByUserId: (slice, userId) => slice.entities.filter((post) => post.user === userId),
+    selectStatus: (slice) => slice.status,
   },
 })
 

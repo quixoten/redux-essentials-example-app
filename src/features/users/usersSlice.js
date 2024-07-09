@@ -1,7 +1,12 @@
+import { createEntityAdapter } from '@reduxjs/toolkit'
 import { client } from '../../api/client'
 import { createAppSlice } from '../../app/createAppSlice'
 
-const initialState = []
+const usersAdapter = createEntityAdapter({
+  sortComparer: (a, b) => a.name.localeCompare(b.name),
+})
+const initialState = usersAdapter.getInitialState()
+const basicSelectors = usersAdapter.getSelectors()
 
 const usersSlice = createAppSlice({
   name: 'users',
@@ -13,13 +18,13 @@ const usersSlice = createAppSlice({
         return response
       },
       {
-        fulfilled: (_slice, action) => action.payload.data,
+        fulfilled: (slice, action) => usersAdapter.setAll(slice, action.payload.data),
       },
     ),
   }),
   selectors: {
-    selectAllUsers: (users) => users,
-    selectUserById: (users, id) => users.find((user) => user.id === id),
+    selectAllUsers: basicSelectors.selectAll,
+    selectUserById: basicSelectors.selectById,
   },
 })
 

@@ -17,12 +17,29 @@ const Wrapper = ({ children }) => {
   )
 }
 
+const PostExcerpt = ({ postId }) => {
+  const post = useSelector((state) => postsSelectors.selectPostById(state, postId))
+  return (
+    <article className="post-excerpt" key={post.id}>
+      <h3>{post.title}</h3>
+      <div>
+        <PostAuthor userId={post.user} />
+        <TimeAgo timestamp={post.date} />
+        <ReactionButtons post={post} />
+      </div>
+      <p className="post-content">{post.content.substring(0, 100)}</p>
+      <Link to={`/posts/${post.id}`} className="button muted-button">
+        View Post
+      </Link>
+    </article>
+  )
+}
+
 export const PostsList = () => {
   const dispatch = useDispatch()
-  const posts = useSelector(postsSelectors.selectAllPosts)
   const postsStatus = useSelector(postsSelectors.selectStatus)
   const postsError = useSelector(postsSelectors.selectError)
-  const orderedPosts = posts.slice().sort((a, b) => b.date.localeCompare(a.date))
+  const orderedPostIds = useSelector(postsSelectors.selectPostIds)
 
   React.useEffect(() => {
     if (postsStatus === 'idle') {
@@ -46,20 +63,7 @@ export const PostsList = () => {
     )
   }
 
-  const renderedPosts = orderedPosts.map((post) => (
-    <article className="post-excerpt" key={post.id}>
-      <h3>{post.title}</h3>
-      <div>
-        <PostAuthor userId={post.user} />
-        <TimeAgo timestamp={post.date} />
-        <ReactionButtons post={post} />
-      </div>
-      <p className="post-content">{post.content.substring(0, 100)}</p>
-      <Link to={`/posts/${post.id}`} className="button muted-button">
-        View Post
-      </Link>
-    </article>
-  ))
+  const renderedPosts = orderedPostIds.map((postId) => <PostExcerpt key={postId} postId={postId} />)
 
   return <Wrapper>{renderedPosts}</Wrapper>
 }

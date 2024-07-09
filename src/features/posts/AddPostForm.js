@@ -31,9 +31,9 @@ export const AddPostForm = () => {
     )
       .then(
         () => {
-          // titleRef.current.value = ''
-          // contentRef.current.value = ''
-          // authorRef.current.value = ''
+          titleRef.current.value = ''
+          contentRef.current.value = ''
+          authorRef.current.value = ''
         },
         (err) => {
           console.error('Failed to save the post: ', err)
