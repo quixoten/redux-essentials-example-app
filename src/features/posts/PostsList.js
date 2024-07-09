@@ -7,6 +7,7 @@ import { PostAuthor } from './PostAuthor'
 import { TimeAgo } from './TimeAgo'
 import { ReactionButtons } from './ReactionButton'
 import { Spinner } from '../../components/Spinner'
+import { useGetPostsQuery } from '../api/apiSlice'
 
 const Wrapper = ({ children }) => {
   return (
@@ -17,8 +18,7 @@ const Wrapper = ({ children }) => {
   )
 }
 
-const PostExcerpt = ({ postId }) => {
-  const post = useSelector((state) => postsSelectors.selectPostById(state, postId))
+const PostExcerpt = React.memo(({ post }) => {
   return (
     <article className="post-excerpt" key={post.id}>
       <h3>{post.title}</h3>
@@ -33,21 +33,26 @@ const PostExcerpt = ({ postId }) => {
       </Link>
     </article>
   )
-}
+})
 
 export const PostsList = () => {
-  const dispatch = useDispatch()
-  const postsStatus = useSelector(postsSelectors.selectStatus)
-  const postsError = useSelector(postsSelectors.selectError)
-  const orderedPostIds = useSelector(postsSelectors.selectPostIds)
+  const { data: posts = [], isSuccess, isError, error } = useGetPostsQuery()
+  const sortedPosts = React.useMemo(() => {
+    const sortedPosts = posts.slice()
+    // Sort posts in descending chronological order
+    sortedPosts.sort((a, b) => b.date.localeCompare(a.date))
+    return sortedPosts
+  }, [posts])
 
-  React.useEffect(() => {
-    if (postsStatus === 'idle') {
-      dispatch(postsActions.fetchPosts())
-    }
-  }, [postsStatus, dispatch])
+  if (isError) {
+    return (
+      <Wrapper>
+        <div>{error}</div>
+      </Wrapper>
+    )
+  }
 
-  if (postsStatus === 'loading') {
+  if (!isSuccess) {
     return (
       <Wrapper>
         <Spinner text="Loading..." />
@@ -55,15 +60,7 @@ export const PostsList = () => {
     )
   }
 
-  if (postsStatus === 'failed') {
-    return (
-      <Wrapper>
-        <div>{postsError}</div>
-      </Wrapper>
-    )
-  }
-
-  const renderedPosts = orderedPostIds.map((postId) => <PostExcerpt key={postId} postId={postId} />)
+  const renderedPosts = sortedPosts.map((post) => <PostExcerpt key={post.id} post={post} />)
 
   return <Wrapper>{renderedPosts}</Wrapper>
 }
